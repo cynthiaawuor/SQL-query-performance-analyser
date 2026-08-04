@@ -1,5 +1,3 @@
-import type { AppConfig } from "./config/types.js";
-
 /**
  * TODO: The composition root for one audit run. This is the ONLY place that
  * should know the full pipeline order — parsing, db, analysis, and reporting
@@ -22,6 +20,3 @@ import type { AppConfig } from "./config/types.js";
  * Deliberately NOT this function's job: touching process.argv, process.exit,
  * or console.log — that belongs in src/index.ts, which calls this.
  */
-export async function runAudit(config: AppConfig): Promise<string> {
-  throw new Error("not implemented");
-}

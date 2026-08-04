@@ -1,18 +1,27 @@
-import type { ParsedStatement } from "../parser/types.js";
-import type { QueryAuditResult } from "./types.js";
+import type { Client } from "pg";
+import type { Query } from "../types/query.js";
+import type { QueryAuditResult } from "../types/auditResult.js";
+import { explainQuery } from "../db/connection.js";
+import { extractQueryMetrics } from "./metrics.js";
 
 /**
- * TODO (phase 1 stub): For now this just wraps a parsed statement as
- * "pending" — no EXPLAIN, no detectors yet, that's phases 2–4. The point of
- * having this function exist now, doing almost nothing, is to keep analysis
- * a separate stage from parsing/db/reporting from day one (REQ-001), so
- * later phases extend this function's body instead of restructuring the
- * pipeline around it.
- *
- * REQ-002 also lives partly here: if running/parsing this specific statement
- * fails later (phase 2+), that failure must be captured as an "error" result
- * tied to this statement's position — not thrown up to abort the whole run.
+ * REQ-002/REQ-003: one statement's failure (bad SQL, missing table) must not
+ * stop the run — caught here and turned into an "error" result instead of
+ * being thrown up to the caller's loop.
  */
-export function analyseStatement(statement: ParsedStatement): QueryAuditResult {
-  throw new Error("not implemented");
+export async function analyseStatement(
+  client: Client,
+  statement: Query,
+): Promise<QueryAuditResult> {
+  try {
+    const plan = await explainQuery(client, statement.query);
+    const metrics = extractQueryMetrics(plan);
+    return { statement, status: "ok", metrics };
+  } catch (error) {
+    return {
+      statement,
+      status: "error",
+      errorMessage: error instanceof Error ? error.message : String(error),
+    };
+  }
 }

@@ -1,4 +1,4 @@
-import type { QueryAuditResult } from "../analyzer/types.js";
+import type { QueryAuditResult } from "../types/auditResult.js";
 
 /**
  * TODO (phase 1 stub): Render the collected per-statement results into an

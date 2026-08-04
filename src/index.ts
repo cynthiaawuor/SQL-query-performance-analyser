@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
+import { Client } from "pg";
 import filePath from "./cli/index.js";
+import { explainQuery } from "./db/connection.js";
 import { readSqlFile, splitQueries } from "./parser/sqlParser.js";
 
 /**
