@@ -1,17 +1,38 @@
 import type { QueryAuditResult } from "../types/auditResult.js";
 
 /**
- * TODO (phase 1 stub): Render the collected per-statement results into an
- * output string.
- * - For each result: show its position and status. There's no plan/metrics/
- *   findings yet (phases 2–4 add those) — just prove the pipeline is wired
- *   end to end.
- * - An empty `results` array is the "nothing to analyse" outcome (REQ-002) —
- *   render that as an explicit, readable message, not an empty string.
- * - Keep this function's signature (results in, string out) stable — REQ-009
- *   will replace the body with real Markdown severity-grouped output without
- *   needing to change how the rest of the app calls it.
+ * REQ-009: render the collected per-statement results as Markdown, one
+ * section per query — its SQL, its metrics (or error), and any findings.
  */
 export function generateReport(results: QueryAuditResult[]): string {
-  throw new Error("not implemented");
+  if (results.length === 0) {
+    return "# SQL Query Performance Report\n\nNo SQL statements were found to analyse.\n";
+  }
+
+  const sections = results.map(renderQuerySection);
+  return `# SQL Query Performance Report\n\n${sections.join("\n")}`;
+}
+
+function renderQuerySection(result: QueryAuditResult): string {
+  const heading = `## Query ${result.statement.id}\n\n\`\`\`sql\n${result.statement.query}\n\`\`\``;
+
+  if (result.status === "error") {
+    return `${heading}\n\n**Error:** ${result.errorMessage}\n`;
+  }
+
+  const metrics = result.metrics!;
+  const metricsBlock = [
+    `- Estimated cost: ${metrics.estimatedCost}`,
+    `- Rows examined: ${metrics.rowsExamined}`,
+    `- Rows returned: ${metrics.rowsReturned}`,
+    `- Execution time: ${metrics.executionTime} ms`,
+  ].join("\n");
+
+  const findings = result.findings ?? [];
+  const findingsBlock =
+    findings.length === 0
+      ? "No issues found."
+      : `**Findings:**\n${findings.map((finding) => `- **${finding.rule}**: ${finding.message}`).join("\n")}`;
+
+  return `${heading}\n\n${metricsBlock}\n\n${findingsBlock}\n`;
 }
